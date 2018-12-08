@@ -1,0 +1,87 @@
+# TODO: Build your pipeline that will draw lane lines on the test_images
+# then save them to the test_images_output directory.
+path = r'C:\Users\HalleyandWoody\Documents\Python\self-driving\P1_Finding_Lanes\test_images_output'
+
+image_names = os.listdir("test_images/")                                                   # Create list of images to read
+
+images = []
+
+for image in image_names:
+    
+    image_read = mpimg.imread('test_images/' + image)
+
+    image_write = cv2.cvtColor(image_read, cv2.COLOR_RGB2BGR)
+    
+    images.append(image_read)
+
+# plt.imshow(images[0])    
+
+def lane_finder(img):
+    
+    img_copy = np.copy(img)                                             
+    gray = cv2.cvtColor(img_copy,cv2.COLOR_RGB2GRAY)                           #convert to grayscale
+    
+    #Perform Gaussian smoothing to optimize Canny algorithm 
+    kernel_size = 5
+    blur_gray = cv2.GaussianBlur(gray,(kernel_size, kernel_size),0)
+    
+    #Canny edge detection algorithm
+    low_threshold = 100
+    high_threshold = 200
+    edges = cv2.Canny(blur_gray, low_threshold, high_threshold)
+    
+
+    #Next is image masking
+    
+    vertices = np.array([[(100,gray.shape[0]),(430, 320), (575, 320), (gray.shape[1],gray.shape[0])]])
+    masked_image = region_of_interest(edges, vertices)
+
+    
+    #Hough transform (copy-pasted from Udacity lesson)
+    
+    # Define the Hough transform parameters
+    # Make a blank the same size as our image to draw on
+    rho = 5 # distance resolution in pixels of the Hough grid
+    theta = 1*np.pi/180 # angular resolution in radians of the Hough grid
+    threshold = 100     # minimum number of votes (intersections in Hough grid cell)
+    min_line_length = 10 #minimum number of pixels making up a line
+    max_line_gap = 50    # maximum gap in pixels between connectable line segments
+    line_image = np.copy(img)*0 # creating a blank to draw lines on
+
+    # Run Hough on edge detected image
+    # Output "lines" is an array containing endpoints of detected line segments
+    lines = cv2.HoughLinesP(masked_image, rho, theta, threshold, np.array([]),
+                            min_line_length, max_line_gap)
+    
+#     plt.imshow(masked_image)
+    plt.show()
+    
+    # Iterate over the output "lines" and draw lines on a blank image
+    for line in lines:
+        for x1,y1,x2,y2 in line:
+            cv2.line(line_image,(x1,y1),(x2,y2),(255,0,0),10)
+
+    # Create a "color" binary image to combine with line image
+#     color_edges = np.dstack((edges, edges, edges)) 
+    color_edges = img
+    
+    # Draw the lines on the edge image
+    lines_edges = cv2.addWeighted(color_edges, 0.8, line_image, 1, 0) 
+    plt.imshow(lines_edges)
+    
+    return lines_edges
+
+# lane_finder(images[5])
+
+# Iterate through all images given, find lane lines, and create color images with red markers in test_images_output directory
+i = 0
+for image in images:
+    
+    output = lane_finder(image)
+    
+    output = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
+    
+    image_out = cv2.imwrite(os.path.join(path , image_names[i][:-4] + 'Output.jpg'), output) # copies image into test_images_output directory
+    i+=1
+
+
