@@ -24,3 +24,7 @@ Another shortcoming could be the rigidity of the masking. Currently, masking is 
 A possible improvement would be to further test and fine-tune the hough transform parameters.
 
 Another potential improvement could be to either refine or use a different mathematical approach to somehow "dampen" the "shakiness" of the red lines in the videos. 
+
+### 4. Deliverables
+
+To see how the code performed, refer to `test_images_output` folder for sample images, and go to the `test_videos_output` folder to see the performance on real video footage.
