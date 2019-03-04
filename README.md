@@ -1,56 +1,26 @@
 # **Finding Lane Lines on the Road** 
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-<img src="examples/laneLines_thirdPass.jpg" width="480" alt="Combined Image" />
+* Goal: Make a pipeline that finds lane lines on the road
 
-Overview
----
+### 1. Pipeline (in the `P1.ipynb` file)
 
-When we drive, we use our eyes to decide where to go.  The lines on the road that show us where the lanes are act as our constant reference for where to steer the vehicle.  Naturally, one of the first things we would like to do in developing a self-driving car is to automatically detect lane lines using an algorithm.
+I decided to create a Master function **lane_finder(img)** where the input is an mpimg image. I started off by setting up my path, and looping through the image paths in order to create a list of read images (**imread()**).
+**lane_finder()** starts by converting the images to grayscale, then performs Gaussian smoothing in order to optimize the Canny algorithm right after it (assigned to edges variable)
+Up next, **edges**, the Canny edge detected image is masked and assigned to the variable **masked_image** via the provided **region_of_interest()** function.
+Following that, I relied on what was provided in the lesson in order to code Hough's transform on the edge detected image. I played with the inputs a little bit in order to get results that visually worked on all of the test images.
+Up next comes the **draw_lines** task. I did not directly modify the provided **draw_lines()** function, but instead I created my own algorithm using data structures and the **cv2.line()** function: basically, I extracted all of my points and lines from the **hough_image**, split everything into "left lane" and "right lane", and found the average slope for each lane line. I modeled each lane line as one line having the average slope as slope and passing through the point closest to the car/driver/camera on that lane line. I now have a full definition to my line given the equation y = slope*x + b. To define the boundaries of my line, I picked the point with max y, and the point with lowest y that satisfy the line equation.
+Up next, i used the **weighted_img** function to make my lane markings transparent: I combined the main, colored, unmarked image with a binary image of the same shape that has the two lines just calculated. 
+The master **lane_finder()** function returns lines_edges, which is the colored image marked with full, transparent red lines. Lastly, I iterated through all images and called the function **lane_finder()** and copied the output into `test_images_output` directory.
 
-In this project you will detect lane lines in images using Python and OpenCV.  OpenCV means "Open-Source Computer Vision", which is a package that has many useful tools for analyzing images.  
-
-To complete the project, two files will be submitted: a file containing project code and a file containing a brief write up explaining your solution. We have included template files to be used both for the [code](https://github.com/udacity/CarND-LaneLines-P1/blob/master/P1.ipynb) and the [writeup](https://github.com/udacity/CarND-LaneLines-P1/blob/master/writeup_template.md).The code file is called P1.ipynb and the writeup template is writeup_template.md 
-
-To meet specifications in the project, take a look at the requirements in the [project rubric](https://review.udacity.com/#!/rubrics/322/view)
-
-
-Creating a Great Writeup
----
-For this project, a great writeup should provide a detailed response to the "Reflection" section of the [project rubric](https://review.udacity.com/#!/rubrics/322/view). There are three parts to the reflection:
-
-1. Describe the pipeline
-
-2. Identify any shortcomings
-
-3. Suggest possible improvements
-
-We encourage using images in your writeup to demonstrate how your pipeline works.  
-
-All that said, please be concise!  We're not looking for you to write a book here: just a brief description.
-
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup. Here is a link to a [writeup template file](https://github.com/udacity/CarND-LaneLines-P1/blob/master/writeup_template.md). 
+### 2. Potential shortcomings with the current pipeline
 
 
-The Project
----
+One potential shortcoming is how my **draw_lines** algorithm is susceptible to noise. After all, it is simply taking an average of the slopes making up the hough lines of one side of the lane, and creating a line that has that slope. This method could prove unreliable depending on the image and how the hough transform is defined. 
 
-## If you have already installed the [CarND Term1 Starter Kit](https://github.com/udacity/CarND-Term1-Starter-Kit/blob/master/README.md) you should be good to go!   If not, you should install the starter kit to get started on this project. ##
+Another shortcoming could be the rigidity of the masking. Currently, masking is applied inside a 4 edged polygone with a position that is independent of the image (i.e, constant). If the camera is not centered on the lane, issues could arise.
 
-**Step 1:** Set up the [CarND Term1 Starter Kit](https://classroom.udacity.com/nanodegrees/nd013/parts/fbf77062-5703-404e-b60c-95b78b2f3f9e/modules/83ec35ee-1e02-48a5-bdb7-d244bd47c2dc/lessons/8c82408b-a217-4d09-b81d-1bda4c6380ef/concepts/4f1870e0-3849-43e4-b670-12e6f2d4b7a7) if you haven't already.
+### 3. Suggested possible improvements to the pipeline
 
-**Step 2:** Open the code in a Jupyter Notebook
+A possible improvement would be to further test and fine-tune the hough transform parameters.
 
-You will complete the project code in a Jupyter notebook.  If you are unfamiliar with Jupyter Notebooks, check out [Udacity's free course on Anaconda and Jupyter Notebooks](https://classroom.udacity.com/courses/ud1111) to get started.
-
-Jupyter is an Ipython notebook where you can run blocks of code and see results interactively.  All the code for this project is contained in a Jupyter notebook. To start Jupyter in your browser, use terminal to navigate to your project directory and then run the following command at the terminal prompt (be sure you've activated your Python 3 carnd-term1 environment as described in the [CarND Term1 Starter Kit](https://github.com/udacity/CarND-Term1-Starter-Kit/blob/master/README.md) installation instructions!):
-
-`> jupyter notebook`
-
-A browser window will appear showing the contents of the current directory.  Click on the file called "P1.ipynb".  Another browser window will appear displaying the notebook.  Follow the instructions in the notebook to complete the project.  
-
-**Step 3:** Complete the project and submit both the Ipython notebook and the project writeup
-
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
-
+Another potential improvement could be to either refine or use a different mathematical approach to somehow "dampen" the "shakiness" of the red lines in the videos. 
